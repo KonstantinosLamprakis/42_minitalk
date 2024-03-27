@@ -6,9 +6,11 @@
 /*   By: klamprak <klamprak@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/27 07:31:50 by klamprak          #+#    #+#             */
-/*   Updated: 2024/03/27 09:21:50 by klamprak         ###   ########.fr       */
+/*   Updated: 2024/03/27 09:59:49 by klamprak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
+#include <signal.h>
 
 static int	is_int(char *str, int *result);
 static int	ft_atoi(const char *str);
@@ -16,10 +18,28 @@ static int	ft_atoi(const char *str);
 int	main(int argc, char **argv)
 {
 	int	pid;
+	int	i;
+	int	j;
 
-	if (argc != 3 || !is_int(argv[1], &pid));
+	if (argc != 3 || !is_int(argv[1], &pid))
 		return (0);
-
+	while (42)
+	{
+		j = 0;
+		while (j < 8)
+		{
+			if (argv[2][i] >> i & 1 == 1)
+				if (kill(pid, SIGUSR1) == -1)
+					return (1);
+			else
+				if (kill(pid, SIGUSR2) == -1)
+					return (1);
+			j++;
+		}
+		if (argv[2][i] != '\0')
+			return (0);
+		i++;
+	}
 }
 
 // client
