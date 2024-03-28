@@ -6,40 +6,119 @@
 /*   By: klamprak <klamprak@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/27 07:31:50 by klamprak          #+#    #+#             */
-/*   Updated: 2024/03/27 09:59:49 by klamprak         ###   ########.fr       */
+/*   Updated: 2024/03/28 14:45:44 by klamprak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <signal.h>
+#include <unistd.h>
+#include <stdio.h>
+
+// TODO: remove stdio.h from client and server
+// TODO: double check makefile
+// use bzero insted of {0}
+
+/*
+	https://www.codequoi.com/en/sending-and-intercepting-a-signal-in-c/
+	Signals Info:
+		- unistd.h : getpid()
+		- signal.h : signals
+		- 10 SIGUSR1	Terminate	User-defined signal 30
+		- 12 SIGUSR2	Terminate	User-defined signal 31
+		- kill(pid_t pid, int sig): send signal sig to process pid
+		- use sigaction() instead of signal() for portability issues
+			- define a signal hander function
+			- define a list with signals to be blocked during handling
+		- declare shared global variables as volatile
+			- global var used assigned in hander and reader from main
+			- otherwise may compiler cache them, consider they not updated
+		- declare a flag with sig_atomic_t type
+			- flags you read on main and set on handler to be use that \
+			no other interaption between write-read them
+		- sigemptyset: create empty list of signals to be blocked
+		- sigaddset: add signal to list, in order to be blocked
+		- act
+			- act.sa_mask: function to be blocked
+			- act.sa_hander: function to run when signal received
+			- if act.sa_sigaction & act.sa_handler != 0 at the same time \
+			there is a big problem, so initially, bzero to the whole act
+		- pause() : suspend until a signal reach
+		- https://man7.org/linux/man-pages/man7/signal-safety.7.html
+			- signa safe functs in handlers
+		- struct sigaction	act = {0}: if you forgot it, it will not work
+		- when a signal is received, handler executed and then continue from \
+		the last command before the signal
+ */
 
 static int	is_int(char *str, int *result);
 static int	ft_atoi(const char *str);
+void	handler(int signal, siginfo_t *info, void *ucontext);
+
+// server
+// 	- bit = 0;
+// 	- while (42)
+// 		- for each signal
+// 			- block the other signal for not interuption
+// 			- add the bit to char
+// 			- bit_num++
+// 		- if bit_num == 8
+// 			- add char to string
+// 			bit_num = 0;
+// 			- if char == '\0'
+// 				= print the whole string
+// 				= free mem of static and make it null
+// 		- sleep for 1 msec
 
 int	main(int argc, char **argv)
 {
 	int	pid;
 	int	i;
 	int	j;
+	struct sigaction	act = {0};
 
+	if (sigemptyset(&act.sa_mask) == -1)
+		return (1);
+	if (sigaddset(&act.sa_mask, SIGUSR1) == -1)
+		return (1);
+	if (sigaddset(&act.sa_mask, SIGUSR2) == -1)
+		return (1);
+	act.sa_sigaction = &handler;
+	sigaction(SIGUSR1, &act, NULL);
+	sigaction(SIGUSR2, &act, NULL);
+	act.sa_flags = SA_SIGINFO;
 	if (argc != 3 || !is_int(argv[1], &pid))
 		return (0);
+	printf("Client pid: %d\n", getpid());
+	i = 0;
 	while (42)
 	{
 		j = 0;
 		while (j < 8)
 		{
-			if (argv[2][i] >> i & 1 == 1)
+			if (((argv[2][i] >> i) & 1) == 1)
+			{
 				if (kill(pid, SIGUSR1) == -1)
 					return (1);
+			}
 			else
 				if (kill(pid, SIGUSR2) == -1)
 					return (1);
+			write(1, "ok\n", 3);
+			pause();
 			j++;
 		}
 		if (argv[2][i] != '\0')
 			return (0);
 		i++;
 	}
+}
+
+void	handler(int signal, siginfo_t *info, void *ucontext)
+{
+	if (signal == SIGUSR1)
+		write(1, "signal 1\n", 9);
+	else if (signal == SIGUSR2)
+		write(1, "signal 2\n", 9);
 }
 
 // client

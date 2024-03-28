@@ -6,31 +6,37 @@
 /*   By: klamprak <klamprak@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/27 07:31:52 by klamprak          #+#    #+#             */
-/*   Updated: 2024/03/27 12:59:26 by klamprak         ###   ########.fr       */
+/*   Updated: 2024/03/28 14:44:59 by klamprak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <signal.h>
 #include <unistd.h>
+#include <stdio.h>
+
 
 static void	put_nbr(long n);
-static void	handle_0(int signal);
-static void	handle_1(int signal);
-
-// https://www.codequoi.com/en/sending-and-intercepting-a-signal-in-c/
+void	handler(int signal, siginfo_t *info, void *ucontext);
 
 int	main(void)
 {
-	int	i;
+	struct sigaction	act = {0};
 
+	if (sigemptyset(&act.sa_mask) == -1)
+		return (1);
+	if (sigaddset(&act.sa_mask, SIGUSR1) == -1)
+		return (1);
+	if (sigaddset(&act.sa_mask, SIGUSR2) == -1)
+		return (1);
 	put_nbr(getpid());
-	signal(SIGUSR1, handle_1);
-	signal(SIGUSR2, handle_0);
+	act.sa_sigaction = &handler;
+	sigaction(SIGUSR1, &act, NULL);
+	sigaction(SIGUSR2, &act, NULL);
+	act.sa_flags = SA_SIGINFO;
 	while (42)
 	{
-		usleep(10);
-		break ;
-		i++;
+		write(1, "loop\n", 5);
+		pause();
 	}
 }
 
@@ -49,14 +55,13 @@ int	main(void)
 // 				= free mem of static and make it null
 // 		- sleep for 1 msec
 
-static void	handle_1(int signal)
+void	handler(int signal, siginfo_t *info, void *ucontext)
 {
-	return ;
-}
-
-static void	handle_0(int signal)
-{
-	return ;
+	if (signal == SIGUSR1)
+		write(1, "signal 1\n", 9);
+	else if (signal == SIGUSR2)
+		write(1, "signal 2\n", 9);
+	kill(info->si_pid, SIGUSR1);
 }
 
 static void	put_nbr(long n)

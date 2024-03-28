@@ -1,25 +1,30 @@
-CFLAGS = -Wall -Wextra -Werror
+CFLAGS = #-Wall -Wextra -Werror
 
-SRCS =
+SRCC = client.c
+
+SRCS = server.c
+
+OBJC = $(SRCC:.c=.o)
 
 OBJS = $(SRCS:.c=.o)
 
-NAME_CLIENT = client
+CLIENT = client
 
-NAME_SERVER = server
+SERVER = server
 
-HEADER = minitalk.h
+all: $(CLIENT) $(SERVER)
 
-all: $(NAME)
+$(CLIENT): $(OBJC)
+	cc $(CFLAGS) $(OBJC) -o $@
 
-$(NAME): $(OBJS) $(HEADER)
-	cc $(CFLAGS) -I$(HEADER) $(OBJS) -o $@
+$(SERVER): $(OBJS)
+	cc $(CFLAGS) $(OBJS) -o $@
 
 clean:
-	rm -f $(OBJS)
+	rm -f $(OBJS) $(OBJC)
 
 fclean: clean
-	rm -f $(NAME)
+	rm -f $(CLIENT) $(SERVER)
 
 re: fclean all
 
