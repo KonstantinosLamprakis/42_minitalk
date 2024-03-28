@@ -6,7 +6,7 @@
 /*   By: klamprak <klamprak@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/27 07:31:52 by klamprak          #+#    #+#             */
-/*   Updated: 2024/03/28 14:44:59 by klamprak         ###   ########.fr       */
+/*   Updated: 2024/03/28 15:07:24 by klamprak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,10 +34,7 @@ int	main(void)
 	sigaction(SIGUSR2, &act, NULL);
 	act.sa_flags = SA_SIGINFO;
 	while (42)
-	{
-		write(1, "loop\n", 5);
 		pause();
-	}
 }
 
 // server
@@ -57,10 +54,20 @@ int	main(void)
 
 void	handler(int signal, siginfo_t *info, void *ucontext)
 {
+	static unsigned char	c = 0;
+	static int				count = 0;
+
+	count++;
 	if (signal == SIGUSR1)
-		write(1, "signal 1\n", 9);
-	else if (signal == SIGUSR2)
-		write(1, "signal 2\n", 9);
+		c = (c << 1) | 1;
+	else
+		c = (c << 1);
+	if (count == 8)
+	{
+		write(1, &c, sizeof(char));
+		count = 0;
+		c = 0;
+	}
 	kill(info->si_pid, SIGUSR1);
 }
 

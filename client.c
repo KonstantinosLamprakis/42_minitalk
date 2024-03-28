@@ -6,7 +6,7 @@
 /*   By: klamprak <klamprak@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/27 07:31:50 by klamprak          #+#    #+#             */
-/*   Updated: 2024/03/28 14:45:44 by klamprak         ###   ########.fr       */
+/*   Updated: 2024/03/28 15:07:02 by klamprak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,10 +92,10 @@ int	main(int argc, char **argv)
 	i = 0;
 	while (42)
 	{
-		j = 0;
-		while (j < 8)
+		j = 7;
+		while (j >= 0)
 		{
-			if (((argv[2][i] >> i) & 1) == 1)
+			if (((argv[2][i] >> j) & 1) == 1)
 			{
 				if (kill(pid, SIGUSR1) == -1)
 					return (1);
@@ -103,11 +103,10 @@ int	main(int argc, char **argv)
 			else
 				if (kill(pid, SIGUSR2) == -1)
 					return (1);
-			write(1, "ok\n", 3);
 			pause();
-			j++;
+			j--;
 		}
-		if (argv[2][i] != '\0')
+		if (argv[2][i] == '\0')
 			return (0);
 		i++;
 	}
@@ -115,10 +114,7 @@ int	main(int argc, char **argv)
 
 void	handler(int signal, siginfo_t *info, void *ucontext)
 {
-	if (signal == SIGUSR1)
-		write(1, "signal 1\n", 9);
-	else if (signal == SIGUSR2)
-		write(1, "signal 2\n", 9);
+	return ;
 }
 
 // client
