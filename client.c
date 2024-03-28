@@ -6,19 +6,18 @@
 /*   By: klamprak <klamprak@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/27 07:31:50 by klamprak          #+#    #+#             */
-/*   Updated: 2024/03/28 15:07:02 by klamprak         ###   ########.fr       */
+/*   Updated: 2024/03/28 15:30:16 by klamprak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <signal.h>
 #include <unistd.h>
-#include <stdio.h>
 
-// TODO: remove stdio.h from client and server
 // TODO: double check makefile
-// use bzero insted of {0}
+// TODO: use bzero insted of {0}
 
 /*
+	Useful info about signals:
 	https://www.codequoi.com/en/sending-and-intercepting-a-signal-in-c/
 	Signals Info:
 		- unistd.h : getpid()
@@ -44,7 +43,7 @@
 			there is a big problem, so initially, bzero to the whole act
 		- pause() : suspend until a signal reach
 		- https://man7.org/linux/man-pages/man7/signal-safety.7.html
-			- signa safe functs in handlers
+			- signal safe functs in handlers
 		- struct sigaction	act = {0}: if you forgot it, it will not work
 		- when a signal is received, handler executed and then continue from \
 		the last command before the signal
@@ -52,81 +51,41 @@
 
 static int	is_int(char *str, int *result);
 static int	ft_atoi(const char *str);
-void	handler(int signal, siginfo_t *info, void *ucontext);
-
-// server
-// 	- bit = 0;
-// 	- while (42)
-// 		- for each signal
-// 			- block the other signal for not interuption
-// 			- add the bit to char
-// 			- bit_num++
-// 		- if bit_num == 8
-// 			- add char to string
-// 			bit_num = 0;
-// 			- if char == '\0'
-// 				= print the whole string
-// 				= free mem of static and make it null
-// 		- sleep for 1 msec
+void		handler(int signal);
 
 int	main(int argc, char **argv)
 {
-	int	pid;
-	int	i;
-	int	j;
-	struct sigaction	act = {0};
+	int					pid;
+	int					i;
+	int					j;
+	int					k;
 
-	if (sigemptyset(&act.sa_mask) == -1)
-		return (1);
-	if (sigaddset(&act.sa_mask, SIGUSR1) == -1)
-		return (1);
-	if (sigaddset(&act.sa_mask, SIGUSR2) == -1)
-		return (1);
-	act.sa_sigaction = &handler;
-	sigaction(SIGUSR1, &act, NULL);
-	sigaction(SIGUSR2, &act, NULL);
-	act.sa_flags = SA_SIGINFO;
+	signal(SIGUSR1, &handler);
 	if (argc != 3 || !is_int(argv[1], &pid))
 		return (0);
-	printf("Client pid: %d\n", getpid());
 	i = 0;
 	while (42)
 	{
 		j = 7;
 		while (j >= 0)
 		{
-			if (((argv[2][i] >> j) & 1) == 1)
-			{
-				if (kill(pid, SIGUSR1) == -1)
-					return (1);
-			}
+			if (((argv[2][i] >> j--) & 1) == 1)
+				k = kill(pid, SIGUSR1);
 			else
-				if (kill(pid, SIGUSR2) == -1)
-					return (1);
+				k = kill(pid, SIGUSR2);
+			if (k == -1)
+				return (1);
 			pause();
-			j--;
 		}
-		if (argv[2][i] == '\0')
+		if (argv[2][i++] == '\0')
 			return (0);
-		i++;
 	}
 }
 
-void	handler(int signal, siginfo_t *info, void *ucontext)
+void	handler(int signal)
 {
-	return ;
+	signal++;
 }
-
-// client
-// validation_check
-// 	- number of parameter == 3
-// 	- 1st should be an int
-// 		- convert string to int (atoi)
-// 	- 2nd should be a string
-// send string
-// 	- for each char of string
-// 		- for each bit of char(8 bits)
-// 			- send SIGUSR1 if 0 or SIGUSR2 if 1
 
 static int	ft_atoi(const char *str)
 {

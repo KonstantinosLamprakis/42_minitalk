@@ -6,22 +6,22 @@
 /*   By: klamprak <klamprak@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/27 07:31:52 by klamprak          #+#    #+#             */
-/*   Updated: 2024/03/28 15:07:24 by klamprak         ###   ########.fr       */
+/*   Updated: 2024/03/28 15:22:54 by klamprak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <signal.h>
 #include <unistd.h>
-#include <stdio.h>
-
 
 static void	put_nbr(long n);
-void	handler(int signal, siginfo_t *info, void *ucontext);
+void		handler(int signal, siginfo_t *info, void *ucontext);
+void		*ft_memset(void *b, int c, size_t len);
 
 int	main(void)
 {
-	struct sigaction	act = {0};
+	struct sigaction	act;
 
+	ft_memset(&act, 0, sizeof(act));
 	if (sigemptyset(&act.sa_mask) == -1)
 		return (1);
 	if (sigaddset(&act.sa_mask, SIGUSR1) == -1)
@@ -37,27 +37,13 @@ int	main(void)
 		pause();
 }
 
-// server
-// 	- bit = 0;
-// 	- while (42)
-// 		- for each signal
-// 			- block the other signal for not interuption
-// 			- add the bit to char
-// 			- bit_num++
-// 		- if bit_num == 8
-// 			- add char to string
-// 			bit_num = 0;
-// 			- if char == '\0'
-// 				= print the whole string
-// 				= free mem of static and make it null
-// 		- sleep for 1 msec
-
 void	handler(int signal, siginfo_t *info, void *ucontext)
 {
 	static unsigned char	c = 0;
 	static int				count = 0;
 
 	count++;
+	ucontext = NULL;
 	if (signal == SIGUSR1)
 		c = (c << 1) | 1;
 	else
@@ -71,6 +57,7 @@ void	handler(int signal, siginfo_t *info, void *ucontext)
 	kill(info->si_pid, SIGUSR1);
 }
 
+// just prints the number n
 static void	put_nbr(long n)
 {
 	long	div;
@@ -98,4 +85,19 @@ static void	put_nbr(long n)
 	}
 	c = '\0';
 	write(1, &c, sizeof(char));
+}
+
+void	*ft_memset(void *b, int c, size_t len)
+{
+	size_t			i;
+	unsigned char	*result;
+
+	i = 0;
+	result = (unsigned char *)b;
+	while (i < len)
+	{
+		result[i] = (unsigned char)c;
+		i++;
+	}
+	return (b);
 }
